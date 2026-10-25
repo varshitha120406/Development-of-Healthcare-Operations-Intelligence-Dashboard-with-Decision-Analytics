@@ -1,14 +1,16 @@
-# Medical Operations Intelligence Dashboard & Automation System
 
-This clean build is designed from the supplied reference screenshot. It uses React + Vite on the frontend, Express + MongoDB on the backend, Recharts for analytics, JWT demo authentication, and a local demo AI copilot when no OpenAI key is supplied.
+# Development of Healthcare Operations Intelligence Dashboard with Decision Analytics
+
+A Medical Operations Intelligence Dashboard built with React, Vite, Express, MongoDB, Recharts, JWT authentication, and an AI copilot with a local demo fallback.
 
 ## Requirements
 - Windows 10/11
-- Node.js 20+ (Node 24 works)
+- Node.js 20+
 - MongoDB Community Server running locally on port 27017
 
-## First setup
-Open Command Prompt in the project folder:
+## First Setup
+
+Open Command Prompt in the project folder and run:
 
 ```cmd
 npm install
@@ -17,7 +19,7 @@ npm run seed
 npm run dev
 ```
 
-If `npm run install:all` fails because a package is already installed, run:
+If `npm run install:all` fails because a package is already installed, install the dependencies separately:
 
 ```cmd
 cd server
@@ -28,28 +30,36 @@ npm install
 cd ..
 ```
 
-## Login
+## Demo Login
+
 - Email: `admin@medops.local`
 - Password: `Demo@12345`
-- Display name: **Gandhe Varshitha**
+- Display name: Gandhe Varshitha
 
 Other demo users:
-- doctor@medops.local / Demo@12345
-- billing@medops.local / Demo@12345
-- pharmacy@medops.local / Demo@12345
+- `doctor@medops.local` / `Demo@12345`
+- `billing@medops.local` / `Demo@12345`
+- `pharmacy@medops.local` / `Demo@12345`
 
-## Start
-Run only this from the root folder:
+## Start the Application
+
+From the root project folder, run:
 
 ```cmd
 npm run dev
 ```
 
-Do NOT start `server` separately when using the root command. It starts both the API on `http://localhost:5000` and the frontend on `http://localhost:5173`.
+This starts the API at `http://localhost:5000` and the frontend at `http://localhost:5173`, depending on port availability.
 
-## Design
-The home page intentionally follows the supplied reference: dark navy sidebar, blue medical branding, six KPI cards, patient trend, revenue by department, patient flow donut, facility comparison, AI executive summary, module cards, alerts, KPIs, quick actions, right-side AI copilot, and workflow automation.
+## Features
 
-All visible dashboard controls have an action: navigation, tabs, selectors, search, notifications, profile menu, theme toggle, report download, AI prompts, alert rows, quick actions, workflow steps, module cards and page controls.
+- Executive KPI dashboard
+- Patient trends and revenue analytics
+- Patient flow and facility comparisons
+- AI executive summary and copilot
+- Navigation, search, filters, alerts, and quick actions
+- Report downloads and workflow automation
 
-Data is synthetic demo data. It is not real patient information and should not be used for clinical decision-making.
+## Data Notice
+
+The included data is synthetic demo data. It is not real patient information and must not be used for clinical decision-making.
