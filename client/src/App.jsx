@@ -137,9 +137,16 @@ function Login() {
   const { user, login } = useAuth();
   const navg = useNavigate();
 
-  const [email, setEmail] = useState('admin@medops.local');
-  const [password, setPassword] = useState('Demo@12345');
+  const [mode, setMode] = useState('login');
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const [role, setRole] = useState('Doctor');
   const [err, setErr] = useState('');
+  const [success, setSuccess] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -147,9 +154,21 @@ function Login() {
     }
   }, [user, navg]);
 
-  const submit = async e => {
-    e.preventDefault();
+  const switchMode = newMode => {
+    setMode(newMode);
     setErr('');
+    setSuccess('');
+    setName('');
+    setEmail('');
+    setPassword('');
+  };
+
+  const submitLogin = async e => {
+    e.preventDefault();
+
+    setErr('');
+    setSuccess('');
+    setLoading(true);
 
     try {
       await login(email, password);
@@ -157,14 +176,68 @@ function Login() {
     } catch (x) {
       setErr(
         x.response?.data?.message ||
-          'Login failed'
+          'Login failed. Please check your email and password.'
       );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitRegister = async e => {
+    e.preventDefault();
+
+    setErr('');
+    setSuccess('');
+
+    if (password.length < 6) {
+      setErr('Password must contain at least 6 characters.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await api.post('/auth/register', {
+        name,
+        email,
+        password,
+        role
+      });
+
+      // Save the new account
+      localStorage.setItem(
+        'medops_token',
+        response.data.token
+      );
+
+      localStorage.setItem(
+        'medops_user',
+        JSON.stringify(response.data.user)
+      );
+
+      setSuccess(
+        'Account created successfully. Opening dashboard...'
+      );
+
+      // Give the success message a moment to appear
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 700);
+
+    } catch (x) {
+      setErr(
+        x.response?.data?.message ||
+          'Registration failed. Please try again.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <div className="login-page">
       <div className="login-card">
+
         <div className="brand-mark">
           <HeartPulse size={32} />
         </div>
@@ -175,41 +248,190 @@ function Login() {
           Intelligence Dashboard & Automation System
         </p>
 
+        {/* LOGIN / REGISTER TABS */}
+
+        <div
+          style={{
+            display: 'flex',
+            gap: '8px',
+            marginBottom: '20px'
+          }}
+        >
+          <button
+            type="button"
+            className={
+              mode === 'login'
+                ? 'primary'
+                : 'outline'
+            }
+            style={{ flex: 1 }}
+            onClick={() => switchMode('login')}
+          >
+            Sign In
+          </button>
+
+          <button
+            type="button"
+            className={
+              mode === 'register'
+                ? 'primary'
+                : 'outline'
+            }
+            style={{ flex: 1 }}
+            onClick={() => switchMode('register')}
+          >
+            Create Account
+          </button>
+        </div>
+
         {err && (
           <div className="error-box">
             {err}
           </div>
         )}
 
-        <form onSubmit={submit}>
-          <label>
-            Email
-            <input
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
-          </label>
+        {success && (
+          <div className="success-box">
+            {success}
+          </div>
+        )}
 
-          <label>
-            Password
-            <input
-              type="password"
-              value={password}
-              onChange={e =>
-                setPassword(e.target.value)
-              }
-            />
-          </label>
+        {/* LOGIN FORM */}
 
-          <button className="primary full">
-            Sign in
-          </button>
-        </form>
+        {mode === 'login' && (
+          <form onSubmit={submitLogin}>
 
-        <div className="demo-note">
-          Demo admin: <b>admin@medops.local</b> ·{' '}
-          <b>Demo@12345</b>
-        </div>
+            <label>
+              Email
+
+              <input
+                type="email"
+                value={email}
+                onChange={e =>
+                  setEmail(e.target.value)
+                }
+                placeholder="Enter your email"
+                required
+              />
+            </label>
+
+            <label>
+              Password
+
+              <input
+                type="password"
+                value={password}
+                onChange={e =>
+                  setPassword(e.target.value)
+                }
+                placeholder="Enter your password"
+                required
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="primary full"
+              disabled={loading}
+            >
+              {loading
+                ? 'Signing in...'
+                : 'Sign in'}
+            </button>
+
+            <div className="demo-note">
+              Existing admin account:
+              <br />
+              <b>admin@medops.local</b>
+            </div>
+
+          </form>
+        )}
+
+        {/* REGISTER FORM */}
+
+        {mode === 'register' && (
+          <form onSubmit={submitRegister}>
+
+            <label>
+              Full Name
+
+              <input
+                type="text"
+                value={name}
+                onChange={e =>
+                  setName(e.target.value)
+                }
+                placeholder="Enter your full name"
+                required
+              />
+            </label>
+
+            <label>
+              Email
+
+              <input
+                type="email"
+                value={email}
+                onChange={e =>
+                  setEmail(e.target.value)
+                }
+                placeholder="Enter your email"
+                required
+              />
+            </label>
+
+            <label>
+              Password
+
+              <input
+                type="password"
+                value={password}
+                onChange={e =>
+                  setPassword(e.target.value)
+                }
+                placeholder="Create a password"
+                minLength="6"
+                required
+              />
+            </label>
+
+            <label>
+              Role
+
+              <select
+                value={role}
+                onChange={e =>
+                  setRole(e.target.value)
+                }
+              >
+                <option value="Doctor">
+                  Doctor
+                </option>
+
+                <option value="Billing">
+                  Billing
+                </option>
+
+                <option value="Pharmacy">
+                  Pharmacy
+                </option>
+              </select>
+            </label>
+
+            <button
+              type="submit"
+              className="primary full"
+              disabled={loading}
+            >
+              {loading
+                ? 'Creating account...'
+                : 'Create Account'}
+            </button>
+
+          </form>
+        )}
+
       </div>
     </div>
   );
@@ -600,12 +822,8 @@ function Shell() {
                 </span>
 
                 <span>
-                  <b>
-                    Gandhe Varshitha
-                  </b>
-                  <small>
-                    Administrator
-                  </small>
+                  <b>{user?.name || 'User'}</b>
+<small>{user?.role || 'User'}</small>
                 </span>
 
                 <ChevronDown size={15} />
@@ -2161,23 +2379,122 @@ function GenericPage({
 }
 
 function Patients() {
-  const [rows, setRows] =
-    useState([]);
+  const [rows, setRows] = useState([]);
+  const [q, setQ] = useState('');
+  const [showForm, setShowForm] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
 
-  const [q, setQ] =
-    useState('');
+  const [form, setForm] = useState({
+    name: '',
+    age: '',
+    gender: 'Male',
+    phone: '',
+    department: 'General Medicine',
+    location: 'Hyderabad',
+    status: 'Outpatient',
+    diagnosis: '',
+    waitMinutes: 0,
+    admissionDate: ''
+  });
 
-  const load = () =>
-    api
-      .get('/patients', {
+  const load = async () => {
+    try {
+      const r = await api.get('/patients', {
         params: { search: q }
-      })
-      .then(r =>
-        setRows(r.data)
-      )
-      .catch(() => {});
+      });
+      setRows(r.data);
+    } catch (error) {
+      console.error('Failed to load patients:', error);
+    }
+  };
 
-  useEffect(load, []);
+  useEffect(() => {
+    load();
+  }, []);
+
+  const updateForm = e => {
+    const { name, value } = e.target;
+
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const submitPatient = async e => {
+    e.preventDefault();
+    setSaving(true);
+    setMessage('');
+
+    try {
+      const patientId =
+        'PT-' +
+        Date.now().toString().slice(-8);
+
+      const payload = {
+        patientId,
+        name: form.name.trim(),
+        age: Number(form.age),
+        gender: form.gender,
+        phone: form.phone.trim(),
+        department: form.department,
+        location: form.location,
+        status: form.status,
+        diagnosis: form.diagnosis.trim(),
+        waitMinutes: Number(form.waitMinutes) || 0,
+        noShow: false,
+        ...(form.admissionDate
+          ? { admissionDate: form.admissionDate }
+          : {})
+      };
+
+      const response = await api.post(
+        '/patients',
+        payload
+      );
+
+      // Immediately add the newly created patient
+      setRows(prev => [
+        response.data,
+        ...prev
+      ]);
+
+      setMessage(
+        `Patient ${response.data.patientId} added successfully.`
+      );
+
+      setForm({
+        name: '',
+        age: '',
+        gender: 'Male',
+        phone: '',
+        department: 'General Medicine',
+        location: 'Hyderabad',
+        status: 'Outpatient',
+        diagnosis: '',
+        waitMinutes: 0,
+        admissionDate: ''
+      });
+
+      setTimeout(() => {
+        setShowForm(false);
+        setMessage('');
+      }, 1200);
+    } catch (error) {
+      console.error(
+        'Create patient error:',
+        error
+      );
+
+      setMessage(
+        error.response?.data?.message ||
+          'Failed to add patient. Please try again.'
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <GenericPage
@@ -2189,16 +2506,196 @@ function Patients() {
         action={
           <button
             className="primary small"
-            onClick={() =>
-              alert(
-                'New patient form is ready in this demo.'
-              )
-            }
+            onClick={() => {
+              setMessage('');
+              setShowForm(true);
+            }}
           >
             + New Patient
           </button>
         }
       >
+        {message && (
+          <div className="success-box">
+            {message}
+          </div>
+        )}
+
+        {showForm && (
+          <div className="patient-form-card">
+            <div className="form-header">
+              <div>
+                <h3>Add New Patient</h3>
+                <p>
+                  Enter the patient's registration
+                  details below.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => setShowForm(false)}
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={submitPatient}>
+              <div className="form-grid">
+
+                <label>
+                  Patient Name *
+                  <input
+                    name="name"
+                    value={form.name}
+                    onChange={updateForm}
+                    placeholder="Enter full name"
+                    required
+                  />
+                </label>
+
+                <label>
+                  Age *
+                  <input
+                    name="age"
+                    type="number"
+                    min="0"
+                    max="120"
+                    value={form.age}
+                    onChange={updateForm}
+                    placeholder="Age"
+                    required
+                  />
+                </label>
+
+                <label>
+                  Gender
+                  <select
+                    name="gender"
+                    value={form.gender}
+                    onChange={updateForm}
+                  >
+                    <option>Male</option>
+                    <option>Female</option>
+                    <option>Other</option>
+                  </select>
+                </label>
+
+                <label>
+                  Phone
+                  <input
+                    name="phone"
+                    value={form.phone}
+                    onChange={updateForm}
+                    placeholder="Phone number"
+                  />
+                </label>
+
+                <label>
+                  Department
+                  <select
+                    name="department"
+                    value={form.department}
+                    onChange={updateForm}
+                  >
+                    <option>General Medicine</option>
+                    <option>Cardiology</option>
+                    <option>Orthopedics</option>
+                    <option>Neurology</option>
+                    <option>Pediatrics</option>
+                    <option>Gynecology</option>
+                    <option>Dermatology</option>
+                    <option>Emergency</option>
+                  </select>
+                </label>
+
+                <label>
+                  Location
+                  <select
+                    name="location"
+                    value={form.location}
+                    onChange={updateForm}
+                  >
+                    <option>Hyderabad</option>
+                    <option>Bengaluru</option>
+                    <option>Chennai</option>
+                    <option>Mumbai</option>
+                    <option>Delhi</option>
+                    <option>Pune</option>
+                  </select>
+                </label>
+
+                <label>
+                  Status
+                  <select
+                    name="status"
+                    value={form.status}
+                    onChange={updateForm}
+                  >
+                    <option>Outpatient</option>
+                    <option>Admitted</option>
+                    <option>Discharged</option>
+                  </select>
+                </label>
+
+                <label>
+                  Wait Time (minutes)
+                  <input
+                    name="waitMinutes"
+                    type="number"
+                    min="0"
+                    value={form.waitMinutes}
+                    onChange={updateForm}
+                  />
+                </label>
+
+                <label className="full-field">
+                  Diagnosis
+                  <input
+                    name="diagnosis"
+                    value={form.diagnosis}
+                    onChange={updateForm}
+                    placeholder="Enter diagnosis"
+                  />
+                </label>
+
+                <label>
+                  Admission Date
+                  <input
+                    name="admissionDate"
+                    type="date"
+                    value={form.admissionDate}
+                    onChange={updateForm}
+                  />
+                </label>
+
+              </div>
+
+              <div className="form-actions">
+                <button
+                  type="button"
+                  className="outline"
+                  onClick={() => setShowForm(false)}
+                  disabled={saving}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="submit"
+                  className="primary"
+                  disabled={saving}
+                >
+                  {saving
+                    ? 'Saving...'
+                    : 'Add Patient'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         <div className="toolbar">
           <div className="search-field">
             <Search />
@@ -2218,13 +2715,9 @@ function Patients() {
 
           <button
             className="outline"
-            onClick={() =>
-              alert(
-                'Filter options: status, department, admission date'
-              )
-            }
+            onClick={load}
           >
-            Filters
+            Refresh
           </button>
         </div>
 
@@ -2235,22 +2728,15 @@ function Patients() {
             ['name', 'Patient'],
             ['age', 'Age'],
             ['gender', 'Gender'],
-            [
-              'department',
-              'Department'
-            ],
+            ['department', 'Department'],
             ['status', 'Status'],
-            [
-              'waitMinutes',
-              'Wait'
-            ]
+            ['waitMinutes', 'Wait']
           ]}
         />
       </Card>
     </GenericPage>
   );
 }
-
 function Staff() {
   const [rows, setRows] =
     useState([]);
